@@ -4,7 +4,8 @@ module "aws-dev" {
     regiao_aws = "us-west-2"
     chave = "IaC-DEV"
     grupoDeSeguranca = "Dev"
-    minimo = 0
+    minimo = 1
     maximo = 1
     nomeGrupo = "Dev"    
+    producao = false
 }
