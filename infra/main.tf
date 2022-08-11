@@ -59,7 +59,7 @@ resource "aws_lb_target_group" "alvoLoadBalancer" {
 resource "aws_default_vpc" "default" {
 }
 resource "aws_lb_listener" "entradaLoadBalancer" {
-  load_balancer_arn = aws_lb.l    type = "forward"oadBalancer.arn
+  load_balancer_arn = aws_lb.loadBalancer.arn
   port = "8000"
   protocol = "HTTP"
   default_action {
