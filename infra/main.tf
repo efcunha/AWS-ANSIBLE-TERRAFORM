@@ -28,8 +28,6 @@ resource "aws_key_pair" "chaveSSH" {
   key_name = var.chave
   public_key = file("${var.chave}.pub") 
 }
-
-
 resource "aws_autoscaling_group" "grupo" {
   availability_zones = [ "${var.regiao_aws}a", "${var.regiao_aws}b" ]
   name = var.nomeGrupo
@@ -41,7 +39,25 @@ resource "aws_autoscaling_group" "grupo" {
     version = "$Latest"
   }
 }
+resource "aws_autoscaling_schedule" "Ligar" {
+  scheduled_action_name  = "liga"
+  min_size               = 1
+  max_size               = 1
+  desired_capacity       = 1
+  start_time             = timeadd(timestamp(), "10m")
+  recurrence             = "0 10 * * Mon-Fri" // Cuiadado com o fuso horario
+  autoscaling_group_name = aws_autoscaling_group.grupo.name
+}
 
+resource "aws_autoscaling_schedule" "desliga" {
+  scheduled_action_name  = "desliga"
+  min_size               = 1
+  max_size               = 1
+  desired_capacity       = 1
+  start_time             = timeadd(timestamp(), "11m")
+  recurrence             = "0 21 * * Mon-Fri" //Cuiadado com o fuso horario
+  autoscaling_group_name = aws_autoscaling_group.grupo.name
+}
 resource "aws_default_subnet" "subnet_1" {
   availability_zone = "${var.regiao_aws}a" 
 }
