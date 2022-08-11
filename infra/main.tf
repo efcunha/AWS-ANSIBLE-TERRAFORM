@@ -8,16 +8,17 @@ terraform {
   required_version = ">= 1.2.0"
 }
 
-provider "aws"{
-  region = var.regiao_aws
+provider "aws" {
+  profile = "default"
+  region  = var.regiao_aws
 }
 
 resource "aws_launch_template" "maquina" {
-  image_id      = "ami-0d70546e43a941d70"
+  image_id      = "ami-03d5c68bab01f3496"
   instance_type = var.instancia
   key_name = var.chave
-    tags = {
-    Name = "AWS Terraform Ansible"
+  tags = {
+    Name = "Terraform Ansible Python"
   }
   security_group_names = [ var.grupoDeSeguranca ]
   user_data = filebase64("ansible.sh")
@@ -25,45 +26,51 @@ resource "aws_launch_template" "maquina" {
 
 resource "aws_key_pair" "chaveSSH" {
   key_name = var.chave
-  public_key = file("${var.chave}.pub")
-} 
+  public_key = file("${var.chave}.pub") 
+}
+
 
 resource "aws_autoscaling_group" "grupo" {
-  availability_zones = ["${var.regiao_aws}a", "${var.regiao_aws}b"]
-  name= var.nomeGrupo
+  availability_zones = [ "${var.regiao_aws}a", "${var.regiao_aws}b" ]
+  name = var.nomeGrupo
   max_size = var.maximo
   min_size = var.minimo
   launch_template {
     id = aws_launch_template.maquina.id
     version = "$Latest"
   }
-  target_group_arns = aws_lb_target_group.alvoLoadBalancer.arn
-}
- resource "aws_default_subnet" "subnet_1" {
-  availability_zone = "${var.regiao_aws}a"
-}
-resource "aws_default_subnet" "subnet_2" {
-  availability_zone = "${var.regiao_aws}b"
+  target_group_arns = [ aws_lb_target_group.alvoLoadBalancer.arn ]
 }
 
-resource "aws_lb" "loadBalance    type = "forward"r" {
-  internal = false
-  subnets = [aws_default_subnet.subnet_1.id, aws_default_subnet.subnet_2.id]
+resource "aws_default_subnet" "subnet_1" {
+  availability_zone = "${var.regiao_aws}a" 
 }
+
+resource "aws_default_subnet" "subnet_2" {
+  availability_zone = "${var.regiao_aws}b" 
+}
+
+resource "aws_lb" "loadBalancer" {
+  internal = false
+  subnets = [ aws_default_subnet.subnet_1.id, aws_default_subnet.subnet_2.id ]
+}
+
+resource "aws_default_vpc" "vpc" {
+}
+
 resource "aws_lb_target_group" "alvoLoadBalancer" {
-  name = "maquinaAlvo"
+  name = "alvoLoadBalancer"
   port = "8000"
   protocol = "HTTP"
-  vpc_id = aws_default_vpc.default.id
+  vpc_id = aws_default_vpc.vpc.id
 }
-resource "aws_default_vpc" "default" {
-}
+
 resource "aws_lb_listener" "entradaLoadBalancer" {
   load_balancer_arn = aws_lb.loadBalancer.arn
   port = "8000"
   protocol = "HTTP"
   default_action {
-    type = "forward"    
+    type = "forward"
     target_group_arn = aws_lb_target_group.alvoLoadBalancer.arn
   }
 }
